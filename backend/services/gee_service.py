@@ -35,20 +35,55 @@ def initialize_gee() -> bool:
     """
     Authenticate and initialise the Google Earth Engine Python API.
 
-    Uses Application Default Credentials (ADC) if already authenticated
-    via `earthengine authenticate`, otherwise falls back to service account.
+    Uses the stored OAuth2 credentials from:
+        ~/.config/earthengine/credentials
+    (created by running `earthengine authenticate` once).
+
+    If GEE_PROJECT_ID is not set in .env the function logs a clear
+    actionable message and returns False rather than hanging on a
+    browser-based auth flow.
 
     Returns:
         bool: True on success, False on failure.
     """
+    if not GEE_PROJECT_ID:
+        logger.error(
+            "GEE_PROJECT_ID is not set. "
+            "Create a .env file in the backend directory with:\n"
+            "    GEE_PROJECT_ID=your-cloud-project-id\n"
+            "Find your project ID at https://console.cloud.google.com"
+        )
+        return False
+
+    import os
+    cred_path = os.path.expanduser("~/.config/earthengine/credentials")
+    cred_exists = os.path.exists(cred_path)
+
     try:
         logger.info("Initialising GEE (project: %s)…", GEE_PROJECT_ID)
-        ee.Authenticate()
+        if not cred_exists:
+            # No stored credentials — run the one-time browser auth flow
+            logger.info(
+                "No GEE credentials found. Launching browser auth flow…"
+            )
+            ee.Authenticate()
+        else:
+            logger.info("Using stored GEE credentials from %s", cred_path)
+
         ee.Initialize(project=GEE_PROJECT_ID)
-        logger.info("GEE initialised successfully.")
+        # Quick connectivity test
+        _ = ee.Number(1).getInfo()
+        logger.info("GEE initialised and connectivity verified.")
         return True
     except Exception as exc:
-        logger.error("GEE initialisation failed: %s", exc)
+        logger.error(
+            "GEE initialisation failed: %s\n"
+            "Check that:\n"
+            "  1. GEE_PROJECT_ID in .env matches a project with Earth Engine API enabled\n"
+            "  2. Your account has access to that project\n"
+            "  3. Run `earthengine authenticate` in your venv if credentials are stale",
+            exc,
+        )
         return False
 
 
