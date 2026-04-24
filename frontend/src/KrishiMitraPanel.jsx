@@ -273,7 +273,7 @@ export default function KrishiMitraPanel({ analysisData, activeField }) {
       {/* ── Header ── */}
       <header className="km-header">
         <div className="km-header__left">
-          <span className="km-header__icon" aria-hidden="true">🌾</span>
+          <span className="km-header__icon" aria-hidden="true"></span>
           <div className="km-header__titles">
             <span className="km-header__name">Krishi Mitra</span>
             <span className="km-header__sub">Your Farm Assistant</span>
@@ -293,7 +293,7 @@ export default function KrishiMitraPanel({ analysisData, activeField }) {
       <section className="km-messages" aria-live="polite">
         {!analysisData || !activeField ? (
           <div style={{ textAlign: 'center', padding: '24px 16px', color: '#a1a1aa', fontSize: '14px', lineHeight: 1.6 }}>
-            <span style={{ fontSize: '24px', display: 'block', marginBottom: '12px' }}>🌱</span>
+            <span style={{ fontSize: '24px', display: 'block', marginBottom: '12px' }}></span>
             Please select a field or draw a new polygon on the map to begin farm analysis.
           </div>
         ) : isInitializing ? (

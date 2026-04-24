@@ -19,7 +19,7 @@ export default function FarmSummary({ analysisData, activeField }) {
                     </div>
                     <div style={{textAlign: "right"}}>
                         <span className="summary-cell__label">Computed Area</span>
-                        <span className="summary-cell__value" style={{color: '#22c55e'}}>{activeField?.areaHectares || 0} Ha</span>
+                        <span className="summary-cell__value" style={{color: '#1A6B3C'}}>{activeField?.areaHectares || 0} Ha</span>
                     </div>
                 </div>
                 <div className="summary-cell" style={{gridColumn: "1 / -1"}}>

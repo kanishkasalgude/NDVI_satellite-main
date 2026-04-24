@@ -47,8 +47,8 @@ const AUTH_STYLES = `
 
   .dark-input:focus {
     outline: none;
-    border-color: #22c55e;
-    box-shadow: 0 0 0 1px #22c55e;
+    border-color: #1A6B3C;
+    box-shadow: 0 0 0 1px #1A6B3C;
   }
   
   /* Remove default arrows from number inputs in some browsers */
@@ -70,12 +70,12 @@ function AnimatedCheck() {
     <div className="relative auth-fade-in" style={{ width: 80, height: 80 }}>
       <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full drop-shadow-md">
-        <circle cx="50" cy="50" r="45" stroke="#22c55e" strokeWidth="4"
-          className="auth-check-circle" fill="rgba(34,197,94,0.05)" />
-        <path d="M30 52 L44 66 L70 36" stroke="#22c55e" strokeWidth="5"
+        <circle cx="50" cy="50" r="45" stroke="#1A6B3C" strokeWidth="4"
+          className="auth-check-circle" fill="rgba(26,107,60,0.05)" />
+        <path d="M30 52 L44 66 L70 36" stroke="#1A6B3C" strokeWidth="5"
           strokeLinecap="round" strokeLinejoin="round" className="auth-check-path" />
       </svg>
-      <div className="absolute inset-0 bg-green-500 opacity-5 rounded-full filter blur-xl" />
+      <div className="absolute inset-0 bg-[#1A6B3C]/100 opacity-5 rounded-full filter blur-xl" />
     </div>
   );
 }
@@ -251,7 +251,7 @@ export default function PremiumAuthFlow({ onAuthSuccess }) {
     }}>
       {/* Abstract dark tech map vibe */}
       <div style={{ position:'absolute', top:'-20%', right:'-10%', width:'50vw', height:'50vw',
-        background:'radial-gradient(circle, rgba(34,197,94,0.03) 0%, rgba(10,15,20,0) 70%)', pointerEvents:'none' }} />
+        background:'radial-gradient(circle, rgba(26,107,60,0.03) 0%, rgba(10,15,20,0) 70%)', pointerEvents:'none' }} />
       <div style={{ position:'absolute', bottom:'-10%', left:'-10%', width:'40vw', height:'40vw',
         background:'radial-gradient(circle, rgba(59,130,246,0.03) 0%, rgba(10,15,20,0) 70%)', pointerEvents:'none' }} />
 
@@ -274,7 +274,7 @@ export default function PremiumAuthFlow({ onAuthSuccess }) {
         {/* Logo minimal */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:40, justifyContent:'center' }}>
           <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', width:36, height:36, borderRadius:10, background:'#111820', border:'1px solid rgba(255,255,255,0.05)' }}>
-             <Leaf style={{ color:'#22c55e', width:18, height:18 }} />
+             <Leaf style={{ color:'#1A6B3C', width:18, height:18 }} />
           </div>
           <span style={{ color:'#e2e8f0', fontWeight:600, fontSize:18, letterSpacing:'0.02em', fontFamily:'"Space Grotesk", system-ui' }}>MindstriX</span>
         </div>
@@ -320,7 +320,7 @@ export default function PremiumAuthFlow({ onAuthSuccess }) {
                 onClick={handleSendOtp}
                 disabled={rawPhone.length !== 10 || isLoading}
                 style={{
-                  width:'100%', height:44, background: rawPhone.length === 10 && !isLoading ? '#22c55e' : '#1e2d3d',
+                  width:'100%', height:44, background: rawPhone.length === 10 && !isLoading ? '#1A6B3C' : '#1e2d3d',
                   color: rawPhone.length === 10 && !isLoading ? '#0a0f14' : '#4a5568',
                   border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor: rawPhone.length === 10 ? 'pointer' : 'not-allowed',
                   display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s',
@@ -367,7 +367,7 @@ export default function PremiumAuthFlow({ onAuthSuccess }) {
                     onFocus={() => setActiveIdx(i)}
                     style={{
                       width:42, height:50, textAlign:'center', fontSize:18, fontWeight:500,
-                      borderRadius:8, border:`1px solid ${isError ? '#ef4444' : d || i === activeIdx ? '#22c55e' : 'rgba(255,255,255,0.05)'}`,
+                      borderRadius:8, border:`1px solid ${isError ? '#ef4444' : d || i === activeIdx ? '#1A6B3C' : 'rgba(255,255,255,0.05)'}`,
                       background:'#1a2432', color: isError ? '#ef4444' : '#e2e8f0',
                       transition:'all 0.15s', cursor:'text', padding:0
                     }}
@@ -381,7 +381,7 @@ export default function PremiumAuthFlow({ onAuthSuccess }) {
                 onClick={handleVerify}
                 disabled={otpFull.length !== 6 || isLoading}
                 style={{
-                  width:'100%', height:44, background: otpFull.length === 6 && !isLoading ? '#22c55e' : '#1e2d3d',
+                  width:'100%', height:44, background: otpFull.length === 6 && !isLoading ? '#1A6B3C' : '#1e2d3d',
                   color: otpFull.length === 6 && !isLoading ? '#0a0f14' : '#4a5568',
                   border:'none', borderRadius:8, fontSize:14, fontWeight:600, cursor: otpFull.length === 6 ? 'pointer' : 'not-allowed',
                   display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s', marginBottom:16
@@ -395,7 +395,7 @@ export default function PremiumAuthFlow({ onAuthSuccess }) {
               <div style={{ textAlign:'center', fontSize:12, color:'#7a90a8' }}>
                 {countdown > 0
                   ? <span>Resend in {String(countdown).padStart(2,'0')}s</span>
-                  : <button onClick={() => { setCountdown(60); setOtp(['','','','','','']); setIsError(false); handleSendOtp(); }} style={{ background:'none', border:'none', color:'#22c55e', cursor:'pointer' }}>Resend Now</button>
+                  : <button onClick={() => { setCountdown(60); setOtp(['','','','','','']); setIsError(false); handleSendOtp(); }} style={{ background:'none', border:'none', color:'#1A6B3C', cursor:'pointer' }}>Resend Now</button>
                 }
               </div>
             </div>

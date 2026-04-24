@@ -1,1 +1,1 @@
-# utils package — reusable geospatial helper functions
+# utils package

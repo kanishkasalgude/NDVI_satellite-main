@@ -46,32 +46,54 @@ def initialize_gee() -> bool:
     Returns:
         bool: True on success, False on failure.
     """
-    if not GEE_PROJECT_ID:
-        logger.error(
-            "GEE_PROJECT_ID is not set. "
-            "Create a .env file in the backend directory with:\n"
-            "    GEE_PROJECT_ID=your-cloud-project-id\n"
-            "Find your project ID at https://console.cloud.google.com"
-        )
-        return False
+    # If GEE_PROJECT_ID is completely missing, we'll try to fallback to the service account
+    # project_id later. We only fail early if we absolutely have no project ID.
+    if GEE_PROJECT_ID:
+        logger.info(f"Loaded GEE_PROJECT_ID from config: {GEE_PROJECT_ID}")
 
     import os
+    import json
+
+    # Try service account first
+    sa_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "serviceAccountKey.json"))
+    if os.path.exists(sa_path):
+        try:
+            with open(sa_path, 'r') as f:
+                sa_info = json.load(f)
+            
+            # Use project_id from service account if GEE_PROJECT_ID is missing or a dummy value
+            project_id = GEE_PROJECT_ID
+            if not project_id or project_id in ('your-gee-project-id', 'your-cloud-project-id'):
+                project_id = sa_info.get('project_id', 'mindstrix-3c2ae')
+
+            logger.info("Initialising GEE with Service Account (project: %s)…", project_id)
+            credentials = ee.ServiceAccountCredentials(sa_info['client_email'], sa_path)
+            ee.Initialize(credentials, project=project_id)
+            _ = ee.Number(1).getInfo()
+            logger.info("GEE initialised via Service Account.")
+            return True
+        except Exception as exc:
+            logger.warning("Failed to init via Service Account: %s", exc)
+
+    # Fallback to local user credentials
     cred_path = os.path.expanduser("~/.config/earthengine/credentials")
     cred_exists = os.path.exists(cred_path)
 
     try:
-        logger.info("Initialising GEE (project: %s)…", GEE_PROJECT_ID)
+        logger.info("Initialising GEE with user credentials…")
         if not cred_exists:
-            # No stored credentials — run the one-time browser auth flow
-            logger.info(
-                "No GEE credentials found. Launching browser auth flow…"
-            )
+            logger.info("No GEE credentials found. Launching browser auth flow…")
             ee.Authenticate()
         else:
             logger.info("Using stored GEE credentials from %s", cred_path)
 
-        ee.Initialize(project=GEE_PROJECT_ID)
-        # Quick connectivity test
+        # Only pass project if it's explicitly set to something valid
+        init_kwargs = {}
+        if project_id and project_id not in ('your-gee-project-id', 'your-cloud-project-id'):
+            init_kwargs['project'] = project_id
+            logger.info("Using explicit GEE project ID: %s", project_id)
+
+        ee.Initialize(**init_kwargs)
         _ = ee.Number(1).getInfo()
         logger.info("GEE initialised and connectivity verified.")
         return True
@@ -79,9 +101,8 @@ def initialize_gee() -> bool:
         logger.error(
             "GEE initialisation failed: %s\n"
             "Check that:\n"
-            "  1. GEE_PROJECT_ID in .env matches a project with Earth Engine API enabled\n"
-            "  2. Your account has access to that project\n"
-            "  3. Run `earthengine authenticate` in your venv if credentials are stale",
+            "  1. The Google account you authenticated with has Earth Engine access.\n"
+            "  2. You have a default GCP project configured with Earth Engine API enabled.",
             exc,
         )
         return False

@@ -26,8 +26,9 @@ function FlyToHook({ center }) {
     return null;
 }
 
-function NativeDrawControl({ onCreated, onDeleted, featureGroupRef }) {
+function NativeDrawControl({ onCreated, onDeleted, featureGroupRef, triggerDrawRef }) {
     const map = useMap();
+    const drawControlRef = useRef(null);
     
     useEffect(() => {
         if (!map || !featureGroupRef.current) return;
@@ -49,7 +50,16 @@ function NativeDrawControl({ onCreated, onDeleted, featureGroupRef }) {
             edit: false
         });
         
+        drawControlRef.current = drawControl;
         map.addControl(drawControl);
+
+        // Expose a function to programmatically start the polygon draw
+        if (triggerDrawRef) {
+            triggerDrawRef.current = () => {
+                const handler = new L.Draw.Polygon(map, drawControl.options.draw.polygon);
+                handler.enable();
+            };
+        }
 
         const handleDrawCreated = (e) => onCreated(e);
         const handleDrawDeleted = (e) => onDeleted(e);
@@ -61,8 +71,9 @@ function NativeDrawControl({ onCreated, onDeleted, featureGroupRef }) {
             map.removeControl(drawControl);
             map.off(L.Draw.Event.CREATED, handleDrawCreated);
             map.off(L.Draw.Event.DELETED, handleDrawDeleted);
+            if (triggerDrawRef) triggerDrawRef.current = null;
         };
-    }, [map, onCreated, onDeleted, featureGroupRef]);
+    }, [map, onCreated, onDeleted, featureGroupRef, triggerDrawRef]);
 
     return null;
 }
@@ -131,7 +142,8 @@ export default function MapView({
     fields = [], 
     onDrawComplete, 
     onDrawDelete,
-    onGeometryEdit
+    onGeometryEdit,
+    triggerDrawRef,
 }) {
     const featureGroupRef = useRef();
     const [hoverData, setHoverData] = useState(null);
@@ -211,7 +223,8 @@ export default function MapView({
                     <NativeDrawControl 
                         onCreated={handleCreated} 
                         onDeleted={handleDeleted} 
-                        featureGroupRef={featureGroupRef} 
+                        featureGroupRef={featureGroupRef}
+                        triggerDrawRef={triggerDrawRef}
                     />
                 </FeatureGroup>
 
@@ -253,7 +266,7 @@ export default function MapView({
                     style={{ left: hoverData.x + 15, top: hoverData.y + 15 }}
                 >
                     <div style={{ fontWeight: 500, fontSize: "15px", color: "#fff" }}>
-                        <span style={{ fontWeight: 600, color: '#22c55e' }}>{activeBand.toUpperCase()}: </span>{hoverData.bandValue}
+                        <span style={{ fontWeight: 600, color: '#1A6B3C' }}>{activeBand.toUpperCase()}: </span>{hoverData.bandValue}
                     </div>
                     <div style={{ fontSize: "13px", fontWeight: 400, color: "#a1a1aa", marginTop: "4px" }}>
                         {hoverData.bandValue < 0.3 ? "Sparse vegetation" : hoverData.bandValue <= 0.6 ? "Moderate vegetation" : "Dense vegetation"}

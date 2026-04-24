@@ -27,9 +27,21 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 from chatbot import chatbot_bp
 
 from config import LOG_LEVEL, LOG_FORMAT, LOG_DATE, LOG_FILE, GEE_PROJECT_ID, LOOKBACK_DAYS, MAX_CLOUD_COVER_PCT
+
+# New onboarding / dashboard blueprints
+from blueprints.auth      import bp as auth_bp
+from blueprints.farmer    import bp as farmer_bp
+from blueprints.farm      import bp as farm_bp
+from blueprints.crop      import bp as crop_bp
+from blueprints.irrigation import bp as irrigation_bp
+from blueprints.soil      import bp as soil_bp
+from blueprints.consent   import bp as consent_bp
+from blueprints.dashboard import bp as dashboard_bp
+from db.pool import init_pool
 from services.gee_service import (
     initialize_gee,
     get_sentinel_composite,
@@ -63,19 +75,43 @@ logger = logging.getLogger("app")
 # ─────────────────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 
+# ── JWT Configuration ─────────────────────────────────────────────────────────
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-change-me")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = datetime.timedelta(days=7)
+jwt = JWTManager(app)
+
 # Allow React dev server (port 5173) — adjust origins for production
 _ALLOWED_ORIGINS = [
     "http://localhost:5173",   # Vite dev server
+    "http://localhost:5174",   # Vite dev server (fallback port)
+    "http://localhost:5175",   # Vite dev server (fallback port)
     "http://localhost:4173",   # Vite preview
     "http://localhost:3000",   # fallback
 ]
-CORS(app, resources={
-    r"/api/*":      {"origins": _ALLOWED_ORIGINS},
-    r"/chatbot/*":  {"origins": _ALLOWED_ORIGINS},
-})
+# Global CORS — covers all routes (API, auth, onboarding, dashboard, chatbot)
+CORS(app, origins=_ALLOWED_ORIGINS, supports_credentials=True)
 
-# Register Krishi Mitra chatbot blueprint (prefix: /chatbot)
+
+# ── Register Blueprints ───────────────────────────────────────────────────────
+# Existing blueprints
 app.register_blueprint(chatbot_bp)
+
+# New onboarding + dashboard blueprints
+app.register_blueprint(auth_bp)
+app.register_blueprint(farmer_bp)
+app.register_blueprint(farm_bp)
+app.register_blueprint(crop_bp)
+app.register_blueprint(irrigation_bp)
+app.register_blueprint(soil_bp)
+app.register_blueprint(consent_bp)
+app.register_blueprint(dashboard_bp)
+
+# ── PostgreSQL Pool ───────────────────────────────────────────────────────────
+try:
+    init_pool()
+    logger.info("[DB] PostgreSQL connection pool ready.")
+except Exception as _pool_err:
+    logger.warning("[DB] PostgreSQL pool init skipped: %s (GEE-only mode)", _pool_err)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # EOS-style NDVI palette (continuous gradient, beige → dark green)
@@ -94,17 +130,24 @@ CVI_PALETTE  = ['#ef4444', '#f59e0b', '#22c55e']
 # ─────────────────────────────────────────────────────────────────────────────
 @app.before_request
 def _init_gee_and_firebase_once():
-    """Initialise GEE and Firebase exactly once before any request is processed."""
-    if not hasattr(app, "_gee_ready"):
-        app._gee_ready = initialize_gee()
-        if app._gee_ready:
-            logger.info("GEE initialised and ready.")
-        else:
-            logger.error("GEE initialisation failed — analysis requests will fail.")
-            
-    if not hasattr(app, "_firebase_ready"):
-        db = init_firebase()
-        app._firebase_ready = (db is not None)
+    """Initialise GEE and Firebase exactly once. Failures are non-fatal — new API routes still work."""
+    try:
+        if not hasattr(app, "_gee_ready"):
+            app._gee_ready = initialize_gee()
+            if app._gee_ready:
+                logger.info("GEE initialised and ready.")
+            else:
+                logger.error("GEE initialisation failed — analysis requests will fail.")
+
+        if not hasattr(app, "_firebase_ready"):
+            try:
+                db = init_firebase()
+                app._firebase_ready = (db is not None)
+            except Exception as firebase_err:
+                logger.warning("[Firebase] Init skipped: %s", firebase_err)
+                app._firebase_ready = False
+    except Exception as exc:
+        logger.warning("[Init] before_request init error (non-fatal): %s", exc)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -362,5 +405,6 @@ def verify_token_endpoint():
 # Entry Point
 # ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    logger.info("Starting CVI Engine Backend — MindstriX")
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.getenv("FLASK_PORT", 5000))
+    logger.info("Starting Satellite Agronomy Intelligence Platform Backend — port %d", port)
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") == "development", use_reloader=False)
