@@ -144,6 +144,7 @@ export default function MapView({
     onDrawDelete,
     onGeometryEdit,
     triggerDrawRef,
+    onFieldSelect,
 }) {
     const featureGroupRef = useRef();
     const [hoverData, setHoverData] = useState(null);
@@ -236,7 +237,7 @@ export default function MapView({
                         isActive={f.id === activeFieldId}
                         isEditing={f.id === editingFieldId}
                         onEditUpdate={(geo) => onGeometryEdit(f.id, geo)}
-                        onClick={() => {}}
+                        onClick={() => { if (onFieldSelect) onFieldSelect(f.id); }}
                     />
                 ))}
 

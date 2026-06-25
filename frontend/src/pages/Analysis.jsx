@@ -55,7 +55,7 @@ export default function Analysis() {
                 selectedDate: null
             }));
             setFields(mappedFarms);
-            setActiveFieldId(mappedFarms[0].id);
+            // setActiveFieldId(mappedFarms[0].id); // Removed auto-select
             setMapCenter([mappedFarms[0].latitude, mappedFarms[0].longitude]);
         }
         if (d.farmer) setUser(d.farmer);
@@ -300,6 +300,7 @@ export default function Analysis() {
                     }}
                     options={[
                         ...(fields.length === 0 ? [{ value: "empty", label: "Draw to add Field", disabled: true }] : []),
+                        ...(!activeFieldId && fields.length > 0 ? [{ value: "empty", label: "Select a Field", disabled: true }] : []),
                         ...fields.map(f => ({ value: f.id, label: f.name })),
                         ...(fields.length > 0 ? [{ value: "add_new", label: "+ Select New Field" }] : [])
                     ]}
@@ -394,6 +395,7 @@ export default function Analysis() {
               onDrawDelete={handleDrawDelete}
               onGeometryEdit={handleGeometryEdit}
               triggerDrawRef={triggerDrawRef}
+              onFieldSelect={setActiveFieldId}
           />
 
           {analysisData && activeFieldId && (
